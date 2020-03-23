@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { OpenWeatherService } from '../../shared/services/open-weather.service';
-import { Subject } from 'rxjs';
+import {  Subject } from 'rxjs';
 import { IWeather } from '../../shared/interfaces/weather.interface';
 import { filter, takeUntil } from 'rxjs/operators';
 
@@ -11,7 +11,7 @@ import { filter, takeUntil } from 'rxjs/operators';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OpenWeatherComponent implements OnInit, OnDestroy {
-  public weatherData: IWeather[];
+  public weatherData: IWeather[] = [];
 
   private destroy$: Subject<void> = new Subject<void>();
 
@@ -35,7 +35,6 @@ export class OpenWeatherComponent implements OnInit, OnDestroy {
       )
       .subscribe((data: IWeather[]) => {
         this.weatherData = data;
-        console.log(data);
         this.cdr.markForCheck();
     });
   }

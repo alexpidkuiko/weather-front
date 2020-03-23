@@ -49,5 +49,6 @@ export interface IWeather {
   id: number;
   name: string;
   cod: number;
+  time: string;
 }
 

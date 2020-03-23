@@ -3,11 +3,15 @@ import { CommonModule } from '@angular/common';
 import { OpenWeatherComponent } from './open-weather.component';
 import { OpenWeatherService } from '../../shared/services/open-weather.service';
 import { HeaderModule } from '../header/header.module';
+import { WeatherChartComponent } from './components/weather-chart/weather-chart.component';
 
 
 
 @NgModule({
-  declarations: [OpenWeatherComponent],
+  declarations: [
+    OpenWeatherComponent,
+    WeatherChartComponent
+  ],
   imports: [
     CommonModule,
     HeaderModule,
