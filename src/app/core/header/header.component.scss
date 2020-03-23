@@ -1,0 +1,13 @@
+:host ::ng-deep {
+  display: block;
+}
+
+.header {
+  display: flex;
+  justify-content: center;
+
+  &-search-input {
+    max-width: 300px;
+    margin-right: 15px;
+  }
+}

@@ -1,0 +1,10 @@
+<header class="header">
+  <nz-input-group class="header-search-input" nzSearch [nzAddOnAfter]="suffixIconButton">
+    <input type="text" nz-input  [formControl]="locationControl" placeholder="input search location" />
+  </nz-input-group>
+  <button nz-button nzType="primary" (click)="stopWeatherStream()" [disabled]="!isStreamOpen">Stop stream</button>
+</header>
+
+<ng-template #suffixIconButton>
+  <button nz-button nzType="primary" (click)="startWeatherStream()" [disabled]="isStreamOpen"><i nz-icon nzType="search"></i></button>
+</ng-template>
