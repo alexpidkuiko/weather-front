@@ -11,7 +11,7 @@ import { filter, takeUntil } from 'rxjs/operators';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OpenWeatherComponent implements OnInit, OnDestroy {
-  public weatherData: IWeather[] = [];
+  public weatherData: any[] = [];
 
   private destroy$: Subject<void> = new Subject<void>();
 
@@ -34,7 +34,7 @@ export class OpenWeatherComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe((data: IWeather[]) => {
-        this.weatherData = data;
+        this.weatherData = data.map(({main}) => ({value: main.temp, date: new Date()}));
         this.cdr.markForCheck();
     });
   }

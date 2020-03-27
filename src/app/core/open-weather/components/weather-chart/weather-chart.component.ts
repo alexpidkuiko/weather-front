@@ -1,175 +1,100 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import * as d3 from 'd3';
-import { IWeather } from '../../../../shared/interfaces/weather.interface';
+import {
+  Component,
+  ElementRef,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+  ViewEncapsulation
+} from '@angular/core';
+
+import * as d3 from 'd3-selection';
+import * as d3Scale from 'd3-scale';
+import * as d3Shape from 'd3-shape';
+import * as d3Array from 'd3-array';
+import * as d3Axis from 'd3-axis';
+
 
 @Component({
   selector: 'app-weather-chart',
   templateUrl: './weather-chart.component.html',
   styleUrls: ['./weather-chart.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  encapsulation: ViewEncapsulation.None,
 })
 export class WeatherChartComponent implements OnInit, OnChanges {
-  @Input() public transitionTime = 1000;
-  @Input() public xmax = 45;
-  @Input() public ymax = 200;
-  @Input() public hticks = 60;
-  @Input() public data: IWeather[];
-  @Input() public showLabel = true;
+  @Input() public weatherData: any[];
 
+  private margin = {top: 20, right: 20, bottom: 30, left: 50};
+  private width: number;
+  private height: number;
+  private x: any;
+  private y: any;
+  private svg: any;
+  private line: d3Shape.Line<[number, number]>;
   public hostElement;
-  public svg;
-  public g;
-  public colorScale;
-  public x;
-  public y;
-  public bins;
-  public paths;
-  public area;
-  public histogram;
 
-
-  constructor(private elRef: ElementRef, private cdr: ChangeDetectorRef) {
+  constructor(private elRef: ElementRef) {
     this.hostElement = this.elRef.nativeElement;
+    this.width = 900 - this.margin.left - this.margin.right;
+    this.height = 500 - this.margin.top - this.margin.bottom;
   }
 
-  public ngOnChanges(changes: SimpleChanges): void {
-    if (changes.data) {
-      this.updateChart(changes.data.currentValue);
+  ngOnChanges(changes: SimpleChanges): void {
+    if (this.weatherData.length) {
+      this.updateSvg();
     }
   }
 
-  public ngOnInit(): void {
+
+  ngOnInit() {
+    this.initSvg();
+    this.initAxis();
+    this.drawAxis();
+    this.drawLine();
   }
 
-  public createChart(data: IWeather[]) {
-    this.removeExistingChartFromParent();
-    this.setChartDimensions();
-    this.setColorScale();
-    this.addGraphicsElement();
-    this.createXAxis();
-    this.createYAxis();
+  private updateSvg(): void {
 
-    this.area = d3.area()
-      .x((datum: any) => this.x(d3.mean([datum.x1, datum.x2])))
-      .y0(this.y(0))
-      .y1((datum: any) => this.y(datum.length));
-
-
-    this.histogram = d3.histogram()
-      .value((datum) => datum)
-      .domain([0, this.xmax])
-      .thresholds(this.x.ticks(this.hticks));
-
-    this.processData(data);
-    this.createAreaCharts();
   }
 
-  public updateChart(data: IWeather[]) {
-    if (!this.svg) {
-      this.createChart(data);
-      return;
-    }
-
-    this.processData(data);
-
-    this.updateAreaCharts();
-
-    this.cdr.detectChanges();
+  private initSvg() {
+    this.svg = d3.select('svg')
+      .append('g')
+      .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')');
   }
 
-  private createAreaCharts() {
-    this.paths = [];
-    this.bins.forEach((row, index) => {
-      this.paths.push(this.g.append('path')
-        .datum(row)
-        .attr('fill', this.colorScale('' + index))
-        .attr('stroke-width', 0.1)
-        .attr('opacity', 0.5)
-        .attr('d', (datum: any) => this.area(datum))
-      );
-    });
+  private initAxis() {
+    this.x = d3Scale.scaleTime().range([0, this.width]);
+    this.y = d3Scale.scaleLinear().range([this.height, 0]);
+    this.x.domain(d3Array.extent(this.weatherData, (d) => d.date ));
+    this.y.domain(d3Array.extent(this.weatherData, (d) => d.value ));
   }
 
-  private updateAreaCharts() {
-    this.paths.forEach((path, index) => {
-      path.datum(this.bins[index])
-        .transition().duration(this.transitionTime)
-        .attr('d', d3.area()
-          .x((datum: any) => this.x(d3.mean([datum.x1, datum.x2])))
-          .y0(this.y(0))
-          .y1((datum: any) => this.y(datum.length)));
+  private drawAxis() {
+    this.svg.append('g')
+      .attr('class', 'axis axis--x')
+      .attr('transform', 'translate(0,' + this.height + ')')
+      .call(d3Axis.axisBottom(this.x));
 
-    });
+    this.svg.append('g')
+      .attr('class', 'axis axis--y')
+      .call(d3Axis.axisLeft(this.y))
+      .append('text')
+      .attr('class', 'axis-title')
+      .attr('transform', 'rotate(-90)')
+      .attr('y', 6)
+      .attr('dy', '.71em')
+      .style('text-anchor', 'end')
+      .text('Temperature');
   }
 
-  private removeExistingChartFromParent(): void {
-    d3.select(this.hostElement).select('svg').remove();
-  }
-
-  private setChartDimensions(): void {
-    const viewBoxHeight = 100;
-    const viewBoxWidth = 200;
-
-    this.svg = d3.select(this.hostElement).append('svg')
-      .attr('width', '75%')
-      .attr('height', '75%')
-      .attr('viewBox', '0 0 ' + viewBoxWidth + ' ' + viewBoxHeight);
-  }
-
-  private setColorScale(): void {
-    this.colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-  }
-
-  private addGraphicsElement(): void {
-    this.g = this.svg.append('g')
-      .attr('transform', 'translate(0,0)');
-  }
-
-  private createXAxis(): void {
-    this.x = d3.scaleLinear()
-      .domain([0, this.xmax])
-      .range([30, 170]);
-    this.g.append('g')
-      .attr('transform', 'translate(0,90)')
-      .attr('stroke-width', 0.5)
-      .call(d3.axisBottom(this.x).tickSize(0).tickFormat( '' as any));
-
-    this.g.append('g')
-      .attr('transform', 'translate(0,90)')
-      .style('font-size', '6')
-      .style('stroke-dasharray', ('1,1'))
-      .attr('stroke-width', 0.1)
-      .call(d3.axisBottom(this.x).ticks(10).tickSize(-80));
-  }
-
-  private createYAxis(): void {
-    this.y = d3.scaleLinear()
-      .domain([0, this.ymax])
-      .range([90, 10]);
-    this.g.append('g')
-      .attr('transform', 'translate(30,0)')
-      .attr('stroke-width', 0.5)
-      .call(d3.axisLeft(this.y).tickSize(0).tickFormat('' as any));
-    this.g.append('g')
-      .attr('transform', 'translate(30,0)')
-      .style('stroke-dasharray', ('1,1'))
-      .attr('stroke-width', 0.1)
-      .call(d3.axisLeft(this.y).ticks(4).tickSize(-140))
-      .style('font-size', '6');
-
-    if (this.showLabel) {
-      this.g.append('text')
-        .attr('text-anchor', 'middle')
-        .attr('transform', 'translate(10,50) rotate(-90)')
-        .style('font-size', 8)
-        .text('Temperature');
-    }
-  }
-
-  private processData(data: IWeather[]): void {
-    this.bins = [];
-    data.forEach((row) => {
-      this.bins.push(this.histogram(row));
-    });
+  private drawLine() {
+    this.line = d3Shape.line()
+      .x( (d: any) => this.x(d.date) )
+      .y( (d: any) => this.y(d.value) );
+    this.svg.append('path')
+      .datum(this.weatherData)
+      .attr('class', 'line')
+      .attr('d', this.line);
   }
 }
