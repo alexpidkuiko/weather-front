@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  weather-stream-service:
+    build: ./weather-back
+    ports:
+      - 3000:3000
+
+  website:
+    build: ./weather-front
+    ports:
+      - 80:80
+    depends_on:
+      - weather-back
