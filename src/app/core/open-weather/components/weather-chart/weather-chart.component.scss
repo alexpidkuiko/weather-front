@@ -1,3 +1,7 @@
+svg {
+  overflow: visible;
+}
+
 .axis {
   font: 10px sans-serif;
 }
@@ -15,14 +19,8 @@
   stroke-width: 0.5px;
 }
 
-
-.axis--x path {
-  /*display: none;*/
-}
-
-.line {
+.chart-line {
   fill: none;
   stroke: steelblue;
   stroke-width: 1.5px;
 }
-
